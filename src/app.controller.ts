@@ -13,7 +13,7 @@ export class AppController {
   @Get('health')
   getHealth() {
     return {
-      status: 'ok',
+      status: 'Server is running',
       uptime: process.uptime(),
     };
   }
