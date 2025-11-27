@@ -2,19 +2,18 @@ name: Deploy badminton-calendar-api to ECS
 
 on:
   push:
-    branches:
-      - main # main에 push될 때 자동 배포
-  workflow_dispatch: # 수동 실행도 가능
+    branches: ['main'] # main에 push될 때 자동 배포
+  workflow_dispatch: # 버튼 눌러서 수동 실행도 가능
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
   ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+  ECS_TASK_DEFINITION: badminton-tournament-api-task # 실제 Task Definition family 이름에 맞게 사용
 
 jobs:
   deploy:
-    name: Deploy to ECS
     runs-on: ubuntu-latest
 
     steps:
@@ -22,7 +21,7 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      # 2. AWS 자격 증명 설정
+      # 2. AWS 자격증명 설정
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -35,50 +34,101 @@ jobs:
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 4. Docker Buildx 설정 (amd64 이미지 빌드용)
+      # 4. Docker Buildx 설정 (linux/amd64 빌드를 위해)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 5. 이미지 빌드 & ECR 푸시 (commit SHA + latest 두 개 태그)
-      - name: Build and push Docker image
+      # 5. Docker 이미지 빌드 + ECR 푸시 (커밋 SHA + latest 둘 다)
+      - name: Build and push Docker image (linux/amd64)
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
-          ECR_REPO: ${{ env.ECR_REPOSITORY }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          echo "Building image for $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG"
+          echo "Building image for $ECR_REGISTRY/$ECR_REPOSITORY with tags: $IMAGE_TAG, latest"
 
-          # linux/amd64용 이미지 빌드 + 두 개 태그 한 번에 푸시
           docker buildx build \
             --platform linux/amd64 \
-            -t $ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG \
-            -t $ECR_REGISTRY/$ECR_REPO:latest \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
             --push .
 
-          # 다음 스텝에서 쓰기 위해 image 풀네임을 출력값으로 저장
-          echo "image=$ECR_REGISTRY/$ECR_REPO:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "image_uri=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      # 6. (옵션) task-definition.json 안에 REGION 플레이스홀더 치환
-      #    task-definition.json에 "PLACEHOLDER_REGION" 같은 문자열이 있을 때만 필요
-      - name: Update task definition with AWS region
+      # 6. 기존 Task Definition JSON 가져오기
+      - name: Fetch current task definition
+        id: fetch-task-def
+        env:
+          ECS_TASK_DEFINITION: ${{ env.ECS_TASK_DEFINITION }}
         run: |
-          sed -i "s/PLACEHOLDER_REGION/${{ env.AWS_REGION }}/g" task-definition.json
+          aws ecs describe-task-definition \
+            --task-definition $ECS_TASK_DEFINITION \
+            --query 'taskDefinition' > task-def.json
 
-      # 7. 새 이미지 태그를 Task Definition에 주입
-      - name: Render new task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: badminton-tournament-api # TaskDef 안 컨테이너 이름과 정확히 동일해야 함
-          image: ${{ steps.build-image.outputs.image }}
+          echo "Fetched task definition:"
+          cat task-def.json
 
-      # 8. ECS 서비스에 새 Task Definition 배포
-      - name: Deploy to Amazon ECS
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+      # 7. 기존 Task Definition에서 불필요/읽기전용 필드 제거 + image 교체
+      - name: Render new task definition JSON with new image
+        id: render-task-def
+        env:
+          IMAGE_URI: ${{ steps.build-image.outputs.image_uri }}
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
+          echo "Using image URI: $IMAGE_URI"
+
+          # 읽기전용 필드 제거
+          cat task-def.json | jq 'del(
+              .taskDefinitionArn,
+              .revision,
+              .status,
+              .requiresAttributes,
+              .compatibilities,
+              .registeredAt,
+              .registeredBy
+            )' > task-def-stripped.json
+
+          # containerDefinitions 중 name이 badminton-tournament-api 인 컨테이너의 image만 교체
+          cat task-def-stripped.json | jq \
+            --arg IMAGE_URI "$IMAGE_URI" \
+            '.containerDefinitions |= map(
+              if .name == "badminton-tournament-api"
+              then .image = $IMAGE_URI
+              else .
+              end
+            )' > task-def-updated.json
+
+          echo "Updated task definition:"
+          cat task-def-updated.json
+
+      # 8. 새 Task Definition 등록
+      - name: Register new task definition
+        id: register-task-def
+        run: |
+          NEW_TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://task-def-updated.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
+
+          echo "New task definition ARN: $NEW_TASK_DEF_ARN"
+          echo "task_def_arn=$NEW_TASK_DEF_ARN" >> $GITHUB_OUTPUT
+
+      # 9. ECS 서비스에 새 Task Definition 적용 + 롤링 배포
+      - name: Deploy to ECS (update service)
+        env:
+          ECS_CLUSTER: ${{ env.ECS_CLUSTER }}
+          ECS_SERVICE: ${{ env.ECS_SERVICE }}
+          NEW_TASK_DEF_ARN: ${{ steps.register-task-def.outputs.task_def_arn }}
+        run: |
+          aws ecs update-service \
+            --cluster $ECS_CLUSTER \
+            --service $ECS_SERVICE \
+            --task-definition $NEW_TASK_DEF_ARN \
+            --force-new-deployment
+
+          # 안정 상태까지 기다리고 싶으면 아래 주석 해제
+          # aws ecs wait services-stable \
+          #   --cluster $ECS_CLUSTER \
+          #   --services $ECS_SERVICE
