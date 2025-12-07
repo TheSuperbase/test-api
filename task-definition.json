@@ -27,23 +27,23 @@
       "secrets": [
         {
           "name": "DATABASE_URL",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:YOUR_ACCOUNT_ID:secret:badminton-api/DATABASE_URL"
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/DATABASE_URL"
         },
         {
           "name": "DIRECT_URL",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:YOUR_ACCOUNT_ID:secret:badminton-api/DIRECT_URL"
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/DIRECT_URL"
         },
         {
           "name": "JWT_SECRET",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:YOUR_ACCOUNT_ID:secret:badminton-api/JWT_SECRET"
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/JWT_SECRET"
         },
         {
           "name": "ADMIN_ID",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:YOUR_ACCOUNT_ID:secret:badminton-api/ADMIN_ID"
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/ADMIN_ID"
         },
         {
           "name": "ADMIN_PASSWORD",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:YOUR_ACCOUNT_ID:secret:badminton-api/ADMIN_PASSWORD"
+          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/ADMIN_PASSWORD"
         }
       ],
       "logConfiguration": {
