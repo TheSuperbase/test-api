@@ -1,9 +1,9 @@
 {
-  "family": "badminton-tournament-api",
+  "family": "badminton-tournament-api-task",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
-  "cpu": "256",
-  "memory": "512",
+  "cpu": "512",
+  "memory": "1024",
   "executionRoleArn": "arn:aws:iam::553262996745:role/ecsTaskExecutionRole",
   "taskRoleArn": "arn:aws:iam::553262996745:role/ecsTaskRole",
   "containerDefinitions": [
