@@ -15,7 +15,7 @@ export class AppController {
 
   @Get('health')
   @ApiOperation({ summary: 'Health Check' })
-  getHealth() {
+  healthCheck() {
     return {
       status: 'Server is ok',
       uptime: process.uptime(),
