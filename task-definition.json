@@ -1,11 +1,9 @@
 {
-  "family": "badminton-tournament-api-task",
+  "family": "badminton-tournament-api",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
-  "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::553262996745:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::553262996745:role/ecsTaskRole",
+  "memory": "512",
   "containerDefinitions": [
     {
       "name": "badminton-tournament-api",
@@ -14,7 +12,6 @@
       "portMappings": [
         {
           "containerPort": 3000,
-          "hostPort": 3000,
           "protocol": "tcp"
         }
       ],
@@ -24,45 +21,13 @@
           "value": "production"
         }
       ],
-      "secrets": [
-        {
-          "name": "DATABASE_URL",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/DATABASE_URL"
-        },
-        {
-          "name": "DIRECT_URL",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/DIRECT_URL"
-        },
-        {
-          "name": "JWT_SECRET",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/JWT_SECRET"
-        },
-        {
-          "name": "ADMIN_ID",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/ADMIN_ID"
-        },
-        {
-          "name": "ADMIN_PASSWORD",
-          "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:553262996745:secret:badminton-api/ADMIN_PASSWORD"
-        }
-      ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "/ecs/badminton-tournament-api",
-          "awslogs-region": "ap-northeast-2",
+          "awslogs-region": "PLACEHOLDER_REGION",
           "awslogs-stream-prefix": "ecs"
         }
-      },
-      "healthCheck": {
-        "command": [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"
-        ],
-        "interval": 30,
-        "timeout": 5,
-        "retries": 3,
-        "startPeriod": 60
       }
     }
   ]
