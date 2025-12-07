@@ -1,5 +1,4 @@
 import {
-  isDateString,
   IsDateString,
   IsInt,
   IsOptional,
@@ -9,52 +8,61 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTournamentDto {
-  @ApiProperty({ description: '토너먼트 이름', example: '2024 전국배드민턴대회' })
+  @ApiProperty({ description: '대회이름', example: '2024 전국배드민턴대회' })
   @IsString()
   name: string;
 
-  // 날짜들은 프론트에서 문자열(ISO 포맷)로 날아온다고 가정
-  @ApiProperty({ description: '시작일 (ISO 포맷)', example: '2024-11-20' })
+  @ApiProperty({ description: '대회기간 시작일 (ISO 포맷)', example: '2024-11-20' })
   @IsDateString()
   startDate: string;
 
-  @ApiProperty({ description: '종료일 (ISO 포맷, 선택사항)', example: '2024-11-22', required: false })
+  @ApiProperty({ description: '대회기간 종료일 (ISO 포맷)', example: '2024-11-22' })
+  @IsDateString()
+  endDate: string;
+
+  @ApiProperty({ description: '신청기간 시작일 (ISO 포맷, 선택사항)', example: '2024-11-01', required: false })
   @IsOptional()
   @IsDateString()
-  endDate?: string;
+  applyStartDate?: string;
 
-  @ApiProperty({ description: '접수 시작일 (ISO 포맷)', example: '2024-11-01' })
+  @ApiProperty({ description: '신청기간 종료일 (ISO 포맷, 선택사항)', example: '2024-11-15', required: false })
+  @IsOptional()
   @IsDateString()
-  applyStartDate: string;
+  applyEndDate?: string;
 
-  @ApiProperty({ description: '접수 종료일 (ISO 포맷)', example: '2024-11-15' })
-  @IsDateString()
-  applyEndDate: string;
-
-  @ApiProperty({ description: '장소', example: '서울 올림픽공원' })
+  @ApiProperty({ description: '지역 (선택사항)', example: '서울', required: false })
+  @IsOptional()
   @IsString()
-  location: string;
+  region?: string;
 
-  @ApiProperty({ description: '주최', example: '대한배드민턴협회' })
+  @ApiProperty({ description: '장소 (선택사항)', example: '서울 올림픽공원', required: false })
+  @IsOptional()
   @IsString()
-  host: string;
+  location?: string;
+
+  @ApiProperty({ description: '참가팀 수 (선택사항)', example: 32, required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  participantTeams?: number;
+
+  @ApiProperty({ description: '주최 (선택사항)', example: '대한배드민턴협회', required: false })
+  @IsOptional()
+  @IsString()
+  host?: string;
 
   @ApiProperty({ description: '주관 (선택사항)', example: '서울시 배드민턴연맹', required: false })
+  @IsOptional()
   @IsString()
   organizer?: string;
 
-  @ApiProperty({ description: '참가비', example: 50000 })
-  @IsInt()
-  @Min(0)
-  fee: number;
-
-  @ApiProperty({ description: 'URL (선택사항)', example: 'https://example.com', required: false })
+  @ApiProperty({ description: '후원 (선택사항)', example: '스포츠서울', required: false })
   @IsOptional()
   @IsString()
-  url?: string;
+  sponsor?: string;
 
-  @ApiProperty({ description: '메모 (선택사항)', example: '추가 정보', required: false })
+  @ApiProperty({ description: '협찬 (선택사항)', example: '요넥스코리아', required: false })
   @IsOptional()
   @IsString()
-  memo?: string;
+  sponsorship?: string;
 }

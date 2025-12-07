@@ -9,19 +9,20 @@ datasource db {
 }
 
 model Tournament {
-  id             Int      @id @default(autoincrement())
-  name           String
-  startDate      DateTime
-  endDate        DateTime?
-  applyStartDate DateTime
-  applyEndDate   DateTime
-  location       String
-  host           String
-  organizer      String?
-  fee            Int
-  url            String?
-  memo           String?
+  id               Int       @id @default(autoincrement())
+  name             String    // 대회이름 - 필수
+  startDate        DateTime  // 대회기간 시작 - 필수
+  endDate          DateTime  // 대회기간 끝 - 필수
+  applyStartDate   DateTime? // 신청기간 시작 - 옵셔널
+  applyEndDate     DateTime? // 신청기간 끝 - 옵셔널
+  region           String?   // 지역 - 옵셔널
+  location         String?   // 장소 - 옵셔널
+  participantTeams Int?      // 참가팀 - 옵셔널
+  host             String?   // 주최 - 옵셔널
+  organizer        String?   // 주관 - 옵셔널
+  sponsor          String?   // 후원 - 옵셔널
+  sponsorship      String?   // 협찬 - 옵셔널
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
