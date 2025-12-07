@@ -9,8 +9,8 @@ on:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: badminton-tournament-api
-  ECS_SERVICE: badminton-tournament-api-service
-  ECS_CLUSTER: badminton-tournament-api-cluster
+  ECS_SERVICE: badminton-tournament-api-svc
+  ECS_CLUSTER: superbase-cluster
   ECS_TASK_DEFINITION: task-definition.json
   CONTAINER_NAME: badminton-tournament-api
 
