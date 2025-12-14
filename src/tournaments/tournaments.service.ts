@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { TournamentResponseDto } from './dto/tournament-response.dto';
+import { PaginatedTournamentResponseDto } from './dto/paginated-tournament-response.dto';
 import { Tournament } from '@prisma/client';
 
 @Injectable()
@@ -28,13 +29,13 @@ export class TournamentsService {
   private calculateDDay(startDate: Date): number {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const targetDate = new Date(startDate);
     targetDate.setHours(0, 0, 0, 0);
-    
+
     const diffTime = targetDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return diffDays;
   }
 
@@ -45,11 +46,12 @@ export class TournamentsService {
   private toResponseDto(tournament: Tournament): TournamentResponseDto {
     // 대회기간 포맷팅
     const tournamentPeriod = `${this.formatDate(tournament.startDate)} ~ ${this.formatDate(tournament.endDate)}`;
-    
+
     // 신청기간 포맷팅 (없으면 0000.0.0 ~ 0000.0.0)
-    const applyPeriod = tournament.applyStartDate && tournament.applyEndDate
-      ? `${this.formatDate(tournament.applyStartDate)} ~ ${this.formatDate(tournament.applyEndDate)}`
-      : '0000.0.0 ~ 0000.0.0';
+    const applyPeriod =
+      tournament.applyStartDate && tournament.applyEndDate
+        ? `${this.formatDate(tournament.applyStartDate)} ~ ${this.formatDate(tournament.applyEndDate)}`
+        : '0000.0.0 ~ 0000.0.0';
 
     return {
       id: tournament.id,
@@ -63,6 +65,7 @@ export class TournamentsService {
       organizer: tournament.organizer ?? '미정',
       sponsor: tournament.sponsor ?? '미정',
       sponsorship: tournament.sponsorship ?? '미정',
+      platform: tournament.platform ?? '미정',
       dDay: this.calculateDDay(tournament.startDate),
       createdAt: tournament.createdAt,
       updatedAt: tournament.updatedAt,
@@ -75,7 +78,9 @@ export class TournamentsService {
         name: dto.name,
         startDate: new Date(dto.startDate),
         endDate: new Date(dto.endDate),
-        applyStartDate: dto.applyStartDate ? new Date(dto.applyStartDate) : null,
+        applyStartDate: dto.applyStartDate
+          ? new Date(dto.applyStartDate)
+          : null,
         applyEndDate: dto.applyEndDate ? new Date(dto.applyEndDate) : null,
         region: dto.region || null,
         location: dto.location || null,
@@ -84,6 +89,7 @@ export class TournamentsService {
         organizer: dto.organizer || null,
         sponsor: dto.sponsor || null,
         sponsorship: dto.sponsorship || null,
+        platform: dto.platform || null,
       },
     });
 
@@ -110,27 +116,51 @@ export class TournamentsService {
     return this.toResponseDto(tournament);
   }
 
-  async findByMonth(year: number, month: number): Promise<TournamentResponseDto[]> {
+  async findByMonth(
+    year: number,
+    month: number,
+    cursor?: number,
+    limit: number = 10,
+  ): Promise<PaginatedTournamentResponseDto> {
     // month는 1~12로 들어온다고 가정
     const start = new Date(year, month - 1, 1); // 해당 월 1일 00:00
     const end = new Date(year, month, 1); // 다음 달 1일 00:00
 
+    // limit + 1개를 가져와서 다음 페이지 존재 여부 확인
     const tournaments = await this.prisma.tournament.findMany({
       where: {
         startDate: {
           gte: start,
           lt: end,
         },
+        ...(cursor && {
+          id: {
+            gt: cursor,
+          },
+        }),
       },
-      orderBy: {
-        startDate: 'asc',
-      },
+      orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
+      take: limit + 1,
     });
 
-    return tournaments.map((tournament) => this.toResponseDto(tournament));
+    const hasMore = tournaments.length > limit;
+    const items = hasMore ? tournaments.slice(0, limit) : tournaments;
+    const nextCursor =
+      hasMore && items.length > 0
+        ? items[items.length - 1].id.toString()
+        : null;
+
+    return {
+      items: items.map((tournament) => this.toResponseDto(tournament)),
+      nextCursor,
+      hasMore,
+    };
   }
 
-  async update(id: number, dto: UpdateTournamentDto): Promise<TournamentResponseDto> {
+  async update(
+    id: number,
+    dto: UpdateTournamentDto,
+  ): Promise<TournamentResponseDto> {
     // 먼저 존재 여부 체크 (실무에서 매우 중요)
     const exists = await this.prisma.tournament.findUnique({ where: { id } });
 
@@ -144,19 +174,32 @@ export class TournamentsService {
         name: dto.name,
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
-        applyStartDate: dto.applyStartDate !== undefined
-          ? (dto.applyStartDate ? new Date(dto.applyStartDate) : null)
-          : undefined,
-        applyEndDate: dto.applyEndDate !== undefined
-          ? (dto.applyEndDate ? new Date(dto.applyEndDate) : null)
-          : undefined,
-        region: dto.region !== undefined ? (dto.region || null) : undefined,
-        location: dto.location !== undefined ? (dto.location || null) : undefined,
-        participantTeams: dto.participantTeams !== undefined ? (dto.participantTeams ?? null) : undefined,
-        host: dto.host !== undefined ? (dto.host || null) : undefined,
-        organizer: dto.organizer !== undefined ? (dto.organizer || null) : undefined,
-        sponsor: dto.sponsor !== undefined ? (dto.sponsor || null) : undefined,
-        sponsorship: dto.sponsorship !== undefined ? (dto.sponsorship || null) : undefined,
+        applyStartDate:
+          dto.applyStartDate !== undefined
+            ? dto.applyStartDate
+              ? new Date(dto.applyStartDate)
+              : null
+            : undefined,
+        applyEndDate:
+          dto.applyEndDate !== undefined
+            ? dto.applyEndDate
+              ? new Date(dto.applyEndDate)
+              : null
+            : undefined,
+        region: dto.region !== undefined ? dto.region || null : undefined,
+        location: dto.location !== undefined ? dto.location || null : undefined,
+        participantTeams:
+          dto.participantTeams !== undefined
+            ? (dto.participantTeams ?? null)
+            : undefined,
+        host: dto.host !== undefined ? dto.host || null : undefined,
+        organizer:
+          dto.organizer !== undefined ? dto.organizer || null : undefined,
+        sponsor: dto.sponsor !== undefined ? dto.sponsor || null : undefined,
+        sponsorship:
+          dto.sponsorship !== undefined ? dto.sponsorship || null : undefined,
+        platform:
+          dto.platform !== undefined ? dto.platform || null : undefined,
       },
     });
 

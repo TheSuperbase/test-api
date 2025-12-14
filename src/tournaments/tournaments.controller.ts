@@ -35,11 +35,28 @@ export class TournamentsController {
   }
 
   @Get('month')
-  @ApiOperation({ summary: '월별 토너먼트 조회' })
-  @ApiQuery({ name: 'year', description: '년도', example: 2024 })
+  @ApiOperation({ summary: '월별 토너먼트 조회 (커서 기반 페이지네이션)' })
+  @ApiQuery({ name: 'year', description: '년도', example: 2025 })
   @ApiQuery({ name: 'month', description: '월', example: 11 })
+  @ApiQuery({
+    name: 'cursor',
+    description: '커서 (마지막 조회한 토너먼트 ID)',
+    required: false,
+    example: '0',
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: '조회할 개수 (기본값: 10)',
+    required: false,
+    example: 10,
+  })
   @ApiResponse({ status: 200, description: '월별 토너먼트 조회 성공' })
-  findByMonth(@Query('year') year: string, @Query('month') month: string) {
+  findByMonth(
+    @Query('year') year: string,
+    @Query('month') month: string,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ) {
     const y = Number(year);
     const m = Number(month);
 
@@ -49,7 +66,10 @@ export class TournamentsController {
       throw new Error('year, month 쿼리 파라미터를 올바르게 전달해야 합니다.');
     }
 
-    return this.tournamentsService.findByMonth(y, m);
+    const cursorNum = cursor ? Number(cursor) : undefined;
+    const limitNum = limit ? Number(limit) : 10;
+
+    return this.tournamentsService.findByMonth(y, m, cursorNum, limitNum);
   }
 
   @Get(':id')

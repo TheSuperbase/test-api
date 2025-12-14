@@ -7,10 +7,16 @@ export class TournamentResponseDto {
   @ApiProperty({ description: '대회이름', example: '2024 전국배드민턴대회' })
   name: string;
 
-  @ApiProperty({ description: '대회기간 (YYYY.M.D ~ YYYY.M.D 형식)', example: '2024.11.20 ~ 2024.11.22' })
+  @ApiProperty({
+    description: '대회기간 (YYYY.M.D ~ YYYY.M.D 형식)',
+    example: '2024.11.20 ~ 2024.11.22',
+  })
   tournamentPeriod: string;
 
-  @ApiProperty({ description: '신청기간 (YYYY.M.D ~ YYYY.M.D 형식)', example: '2024.11.1 ~ 2024.11.15' })
+  @ApiProperty({
+    description: '신청기간 (YYYY.M.D ~ YYYY.M.D 형식)',
+    example: '2024.11.1 ~ 2024.11.15',
+  })
   applyPeriod: string;
 
   @ApiProperty({ description: '지역', example: '서울' })
@@ -34,7 +40,13 @@ export class TournamentResponseDto {
   @ApiProperty({ description: '협찬', example: '요넥스코리아' })
   sponsorship: string;
 
-  @ApiProperty({ description: 'D-day (대회 시작까지 남은 일수, 음수면 이미 시작)', example: 7 })
+  @ApiProperty({ description: '플랫폼', example: '배드민턴코리아' })
+  platform: string;
+
+  @ApiProperty({
+    description: 'D-day (대회 시작까지 남은 일수, 음수면 이미 시작)',
+    example: 7,
+  })
   dDay: number;
 
   @ApiProperty({ description: '생성일시' })
@@ -43,4 +55,3 @@ export class TournamentResponseDto {
   @ApiProperty({ description: '수정일시' })
   updatedAt: Date;
 }
-
