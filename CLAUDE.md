@@ -4,7 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-배드민턴 토너먼트 정보 관리 REST API. NestJS 기반으로 토너먼트 CRUD, JWT 인증, Swagger 문서화를 제공합니다.
+웹에 흩어져 있는 배드민턴 대회 정보를 한곳에 모아 제공하는 서비스의 Backend API입니다.
+기존 대회 정보 사이트들의 복잡한 UI를 개선하여, 사용자가 대회 일정을 쉽고 빠르게 확인할 수 있도록 합니다.
+
+- **데이터 수집**: Python 크롤러로 여러 대회 사이트에서 정보 수집
+- **API 제공**: NestJS 기반 REST API (토너먼트 CRUD, JWT 인증, Swagger 문서화)
+
+## Tech Stack
+
+| 분류                 | 기술                                   |
+| -------------------- | -------------------------------------- |
+| **Backend**          | NestJS 11, TypeScript 5.7, Node.js     |
+| **Database**         | Supabase (PostgreSQL), Prisma ORM 6.19 |
+| **Authentication**   | Passport, JWT                          |
+| **Validation**       | class-validator, class-transformer     |
+| **Documentation**    | Swagger (OpenAPI)                      |
+| **Testing**          | Jest 30, Supertest                     |
+| **Linting**          | ESLint 9, Prettier                     |
+| **Package Manager**  | pnpm                                   |
+| **Scripts (Python)** | requests, beautifulsoup4, psycopg2     |
 
 ## Commands
 
@@ -54,6 +72,33 @@ src/
 
 ## Database
 
-PostgreSQL + Prisma ORM. 스키마: `prisma/schema.prisma`
+Supabase (PostgreSQL) + Prisma ORM. 스키마: `prisma/schema.prisma`
 
 주요 모델: `Tournament` (대회명, 기간, 신청기간, 지역, 장소, 주최 등)
+
+## Python Scripts
+
+`scripts/python/` 폴더에 데이터 수집 및 import 스크립트가 있습니다.
+
+```bash
+# 가상환경 활성화
+cd scripts/python
+source venv/bin/activate
+
+# 크롤링 (2025년 12월 대회 수집)
+python tournament-scraper.py --end-id 4200 --year 2025 --month 12
+
+# DB import (미리보기)
+python import-csv.py --csv ../../badmintongame_2025_12.csv --dry-run
+
+# DB import (실제 실행)
+python import-csv.py --csv ../../badmintongame_2025_12.csv
+
+# 비활성화
+deactivate
+```
+
+**스크립트 목록:**
+
+- `tournament-scraper.py` - 배드민턴 대회 정보 크롤링 → CSV 저장
+- `import-csv.py` - CSV 파일을 DB에 import

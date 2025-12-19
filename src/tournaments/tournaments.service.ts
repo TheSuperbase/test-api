@@ -198,8 +198,7 @@ export class TournamentsService {
         sponsor: dto.sponsor !== undefined ? dto.sponsor || null : undefined,
         sponsorship:
           dto.sponsorship !== undefined ? dto.sponsorship || null : undefined,
-        platform:
-          dto.platform !== undefined ? dto.platform || null : undefined,
+        platform: dto.platform !== undefined ? dto.platform || null : undefined,
       },
     });
 
