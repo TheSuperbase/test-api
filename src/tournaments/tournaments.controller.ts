@@ -8,6 +8,7 @@ import {
   Query,
   Patch,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -60,10 +61,11 @@ export class TournamentsController {
     const y = Number(year);
     const m = Number(month);
 
-    // 간단한 방어 코드 (나중에 class-validator로 강화 가능)
+    // 간단한 방어 코드
     if (!y || !m || m < 1 || m > 12) {
-      // 실무에서는 BadRequestException 던지는 게 좋음
-      throw new Error('year, month 쿼리 파라미터를 올바르게 전달해야 합니다.');
+      throw new BadRequestException(
+        'year, month 쿼리 파라미터를 올바르게 전달해야 합니다.',
+      );
     }
 
     const cursorNum = cursor ? Number(cursor) : undefined;

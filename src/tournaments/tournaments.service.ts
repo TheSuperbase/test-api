@@ -126,19 +126,20 @@ export class TournamentsService {
     const start = new Date(year, month - 1, 1); // 해당 월 1일 00:00
     const end = new Date(year, month, 1); // 다음 달 1일 00:00
 
-    // limit + 1개를 가져와서 다음 페이지 존재 여부 확인
+    // 해당 월과 조금이라도 겹치는 대회를 모두 가져오기 위한 필터링 (Overlap Logic)
+    // 시작일이 다음달 1일 이전(lt)이고, 종료일이 이번달 1일 이후(gte)인 경우
     const tournaments = await this.prisma.tournament.findMany({
       where: {
         startDate: {
-          gte: start,
           lt: end,
         },
-        ...(cursor && {
-          id: {
-            gt: cursor,
-          },
-        }),
+        endDate: {
+          gte: start,
+        },
       },
+      // Prisma 커서 기능을 사용하여 다중 정렬 조건에서도 정확한 페이지네이션 지원
+      cursor: cursor ? { id: cursor } : undefined,
+      skip: cursor ? 1 : 0,
       orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
       take: limit + 1,
     });
