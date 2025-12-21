@@ -116,15 +116,42 @@ export class TournamentsService {
     return this.toResponseDto(tournament);
   }
 
+  /**
+   * 커서 문자열 파싱 (형식: "startDate_id", 예: "2025-12-20T00:00:00.000Z_123")
+   */
+  private parseCursor(cursor: string): { startDate: Date; id: number } | null {
+    const lastUnderscoreIndex = cursor.lastIndexOf('_');
+    if (lastUnderscoreIndex === -1) return null;
+
+    const startDateStr = cursor.substring(0, lastUnderscoreIndex);
+    const idStr = cursor.substring(lastUnderscoreIndex + 1);
+
+    const startDate = new Date(startDateStr);
+    const id = Number(idStr);
+
+    if (isNaN(startDate.getTime()) || isNaN(id)) return null;
+
+    return { startDate, id };
+  }
+
+  /**
+   * 커서 문자열 생성
+   */
+  private createCursor(tournament: Tournament): string {
+    return `${tournament.startDate.toISOString()}_${tournament.id}`;
+  }
+
   async findByMonth(
     year: number,
     month: number,
-    cursor?: number,
+    cursor?: string,
     limit: number = 10,
   ): Promise<PaginatedTournamentResponseDto> {
     // month는 1~12로 들어온다고 가정
     const start = new Date(year, month - 1, 1); // 해당 월 1일 00:00
     const end = new Date(year, month, 1); // 다음 달 1일 00:00
+
+    const parsedCursor = cursor ? this.parseCursor(cursor) : null;
 
     // limit + 1개를 가져와서 다음 페이지 존재 여부 확인
     const tournaments = await this.prisma.tournament.findMany({
@@ -133,10 +160,15 @@ export class TournamentsService {
           gte: start,
           lt: end,
         },
-        ...(cursor && {
-          id: {
-            gt: cursor,
-          },
+        // 복합 커서 조건: (startDate > cursorDate) OR (startDate = cursorDate AND id > cursorId)
+        ...(parsedCursor && {
+          OR: [
+            { startDate: { gt: parsedCursor.startDate } },
+            {
+              startDate: parsedCursor.startDate,
+              id: { gt: parsedCursor.id },
+            },
+          ],
         }),
       },
       orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
@@ -147,7 +179,7 @@ export class TournamentsService {
     const items = hasMore ? tournaments.slice(0, limit) : tournaments;
     const nextCursor =
       hasMore && items.length > 0
-        ? items[items.length - 1].id.toString()
+        ? this.createCursor(items[items.length - 1])
         : null;
 
     return {

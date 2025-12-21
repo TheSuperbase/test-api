@@ -40,9 +40,10 @@ export class TournamentsController {
   @ApiQuery({ name: 'month', description: '월', example: 11 })
   @ApiQuery({
     name: 'cursor',
-    description: '커서 (마지막 조회한 토너먼트 ID)',
+    description:
+      '커서 (이전 응답의 nextCursor 값, 형식: startDate_id, 예: 2025-12-20T00:00:00.000Z_123)',
     required: false,
-    example: '0',
+    example: '2025-12-01T00:00:00.000Z_10',
   })
   @ApiQuery({
     name: 'limit',
@@ -66,10 +67,9 @@ export class TournamentsController {
       throw new Error('year, month 쿼리 파라미터를 올바르게 전달해야 합니다.');
     }
 
-    const cursorNum = cursor ? Number(cursor) : undefined;
     const limitNum = limit ? Number(limit) : 10;
 
-    return this.tournamentsService.findByMonth(y, m, cursorNum, limitNum);
+    return this.tournamentsService.findByMonth(y, m, cursor, limitNum);
   }
 
   @Get(':id')
