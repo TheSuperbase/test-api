@@ -109,8 +109,17 @@ export class CreateTournamentDto {
   sponsorship?: string;
 
   @ApiProperty({
+    description: '대회 URL (선택사항)',
+    example: 'http://www.badmintongame.co.kr/game/game_view.html?ga_id=4100',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  tournamentUrl?: string;
+
+  @ApiProperty({
     description: '플랫폼 (선택사항)',
-    example: '위꾹',
+    example: '배드민턴코리아',
     required: false,
   })
   @IsOptional()

@@ -22,6 +22,7 @@ model Tournament {
   organizer        String?   // 주관 - 옵셔널
   sponsor          String?   // 후원 - 옵셔널
   sponsorship      String?   // 협찬 - 옵셔널
+  tournamentUrl    String?   // 대회 URL - 옵셔널
   platform         String?   // 플랫폼 - 옵셔널
 
   createdAt        DateTime  @default(now())

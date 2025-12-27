@@ -98,7 +98,8 @@ def import_csv_to_db(csv_path: str, database_url: str, dry_run: bool = False):
             "applyEndDate": apply_end,
             "region": row.get("region") or None,
             "location": row.get("venue") or None,
-            "platform": row.get("url") or None,
+            "tournamentUrl": row.get("url") or None,
+            "platform": None,
         }
 
         if dry_run:
@@ -113,8 +114,8 @@ def import_csv_to_db(csv_path: str, database_url: str, dry_run: bool = False):
             sql = """
                 INSERT INTO "Tournament"
                     (name, "startDate", "endDate", "applyStartDate", "applyEndDate",
-                     region, location, platform, "createdAt", "updatedAt")
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                     region, location, "tournamentUrl", platform, "createdAt", "updatedAt")
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
             """
             cursor.execute(sql, (
                 record["name"],
@@ -124,6 +125,7 @@ def import_csv_to_db(csv_path: str, database_url: str, dry_run: bool = False):
                 record["applyEndDate"],
                 record["region"],
                 record["location"],
+                record["tournamentUrl"],
                 record["platform"],
             ))
             inserted += 1

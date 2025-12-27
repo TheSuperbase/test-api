@@ -40,6 +40,12 @@ export class TournamentResponseDto {
   @ApiProperty({ description: '협찬', example: '요넥스코리아' })
   sponsorship: string;
 
+  @ApiProperty({
+    description: '대회 URL',
+    example: 'http://www.badmintongame.co.kr/game/game_view.html?ga_id=4100',
+  })
+  tournamentUrl: string;
+
   @ApiProperty({ description: '플랫폼', example: '배드민턴코리아' })
   platform: string;
 

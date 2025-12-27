@@ -65,6 +65,7 @@ export class TournamentsService {
       organizer: tournament.organizer ?? '미정',
       sponsor: tournament.sponsor ?? '미정',
       sponsorship: tournament.sponsorship ?? '미정',
+      tournamentUrl: tournament.tournamentUrl ?? '미정',
       platform: tournament.platform ?? '미정',
       dDay: this.calculateDDay(tournament.startDate),
       createdAt: tournament.createdAt,
@@ -89,6 +90,7 @@ export class TournamentsService {
         organizer: dto.organizer || null,
         sponsor: dto.sponsor || null,
         sponsorship: dto.sponsorship || null,
+        tournamentUrl: dto.tournamentUrl || null,
         platform: dto.platform || null,
       },
     });
@@ -230,6 +232,8 @@ export class TournamentsService {
         sponsor: dto.sponsor !== undefined ? dto.sponsor || null : undefined,
         sponsorship:
           dto.sponsorship !== undefined ? dto.sponsorship || null : undefined,
+        tournamentUrl:
+          dto.tournamentUrl !== undefined ? dto.tournamentUrl || null : undefined,
         platform: dto.platform !== undefined ? dto.platform || null : undefined,
       },
     });
