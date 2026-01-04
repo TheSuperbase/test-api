@@ -21,20 +21,37 @@ export class TournamentsService {
   }
 
   /**
-   * D-day 계산 (대회 시작일 기준)
+   * KST 기준 오늘 날짜의 자정(00:00:00) 시각을 반환
+   */
+  private getKSTMidnight(): Date {
+    const now = new Date();
+    // KST = UTC + 9시간
+    const kstOffset = 9 * 60 * 60 * 1000;
+    const kstTime = now.getTime() + kstOffset;
+    const kstDate = new Date(kstTime);
+
+    // KST 기준 날짜의 자정을 UTC로 변환
+    const year = kstDate.getUTCFullYear();
+    const month = kstDate.getUTCMonth();
+    const day = kstDate.getUTCDate();
+
+    return new Date(Date.UTC(year, month, day) - kstOffset);
+  }
+
+  /**
+   * D-day 계산 (대회 시작일 기준, KST 기준)
    * 양수: 대회까지 남은 일수
    * 0: 오늘이 대회 시작일
    * 음수: 대회가 이미 시작됨
    */
   private calculateDDay(startDate: Date): number {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayKST = this.getKSTMidnight();
 
     const targetDate = new Date(startDate);
-    targetDate.setHours(0, 0, 0, 0);
+    targetDate.setUTCHours(0, 0, 0, 0);
 
-    const diffTime = targetDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffTime = targetDate.getTime() - todayKST.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
     return diffDays;
   }
